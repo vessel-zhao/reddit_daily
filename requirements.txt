@@ -1,0 +1,10 @@
+alibabacloud_alimt20181012==1.1.0
+alibabacloud_tea_openapi==0.3.13
+alibabacloud_tea_util==0.3.13
+imgkit==1.2.3
+langchain==0.3.22
+langchain_community==0.3.20
+langchain_openai==0.3.11
+Markdown==3.7
+praw==7.7.1
+python-dotenv==1.1.0
