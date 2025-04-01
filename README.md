@@ -7,8 +7,8 @@
 
 1. 克隆仓库
 ```bash
-git clone <repository-url>
-cd reddit
+git clone https://github.com/zzperfect/reddit_daily.git
+cd reddit_daily
 ```
 
 2. 安装Python依赖
