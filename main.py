@@ -121,6 +121,32 @@ def main():
         logger.error(f"主程序发生异常: {str(e)}", exc_info=True)
         return False
 
+def preview_report(report_path):
+    """预览报告"""
+    try:
+        # 获取所在的日期目录和文件名
+        dir_path = os.path.dirname(report_path)
+        base_name = os.path.basename(report_path)
+        
+        # 设置预览图片路径（与 md 文件位于同一目录）
+        preview_filename = os.path.splitext(base_name)[0] + '.png'
+        preview_path = os.path.join(dir_path, preview_filename)
+        
+        # 生成预览图片
+        convert_md_to_image(report_path, preview_path, width=600)
+        
+        # 检查预览图片是否生成成功
+        if os.path.exists(preview_path) and os.path.getsize(preview_path) > 0:
+            print(f"预览图片已生成: {preview_path}")
+            return True
+        else:
+            print("预览图片生成失败")
+            return False
+            
+    except Exception as e:
+        print(f"预览生成错误: {str(e)}")
+        return False
+
 if __name__ == "__main__":
     print("Reddit分析工具启动...")
     

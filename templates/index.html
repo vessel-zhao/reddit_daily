@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日AI热点话题</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.1.0/github-markdown.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css">
+    <style>
+        :root {
+            --primary-color: #1e90ff;
+            --bg-light: #f0f8ff;
+            --border-color: #e1e8ed;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-light);
+        }
+        
+        .app-container {
+            max-width: 1400px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            background: white;
+            border-right: 1px solid var(--border-color);
+            height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        
+        .content-area {
+            background: white;
+            height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .file-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .file-item:hover {
+            background-color: var(--bg-light);
+        }
+        
+        .file-name {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .file-meta {
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .file-date {
+            color: #888;
+        }
+        
+        .file-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 4px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e90ff, #00bfff);
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+        
+        .preview-container {
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            z-index: 1000;
+        }
+        
+        /* 新增：标签样式 */
+        .file-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background-color: #e8f4ff;
+            color: var(--primary-color);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-right: 8px;
+        }
+        
+        /* 新增：文件类型图标 */
+        .file-type-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        
+        /* 添加 Markdown 模态框样式 */
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+        }
+        
+        .modal-xl {
+            max-width: 1140px;
+        }
+        
+        .modal-body {
+            max-height: calc(100vh - 210px);
+            overflow-y: auto;
+        }
+        
+        /* 添加加载动画样式 */
+        .loading-spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 0.25rem solid #f3f3f3;
+            border-top: 0.25rem solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="row g-0">
+            <!-- 左侧文件列表 -->
+            <div class="col-md-4 sidebar">
+                <div class="header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h1>每日AI热点话题</h1>
+                        <button class="btn btn-light btn-sm" onclick="generateTodayReport()">生成今日报告</button>
+                    </div>
+                </div>
+                <div class="file-list">
+                    {% for file in files %}
+                    <div class="file-item">
+                        <div class="file-name">
+                            {{ file.name }}
+                        </div>
+                        <div class="file-meta">
+                            <span class="file-tag">{{ file.type }}</span>
+                            <span class="file-date">{{ file.date }}</span>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-sm btn-primary" onclick="previewFile('{{ file.path }}')">预览</button>
+                            <button class="btn btn-sm btn-info" onclick="showContent('{{ file.path }}')">查看内容</button>
+                            <button class="btn btn-sm btn-warning" onclick="regeneratePreview('{{ file.path }}')">重新生成预览</button>
+                            <button class="btn btn-sm btn-success" onclick="regenerateMD('{{ file.path }}')">重新生成报告</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- 右侧预览区域 -->
+            <div class="col-md-8 content-area">
+                <div class="preview-container">
+                    <div id="preview-content">
+                        <div class="text-center text-muted">
+                            <p>选择左侧文件进行预览</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="loading" class="loading" style="display: none;">
+        处理中...
+    </div>
+
+    <!-- 添加 Markdown 内容模态框 -->
+    <div class="modal fade" id="contentModal" tabindex="-1" aria-labelledby="contentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contentModalLabel">文件内容</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <article class="markdown-body" id="markdown-content">
+                        <div class="text-center p-5">
+                            <div class="loading-spinner"></div>
+                            <p class="mt-3">加载中...</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/highlight.min.js"></script>
+    <script>
+        let currentConfig = {
+            darkMode: false,
+            showLineNumbers: false
+        };
+
+        function toggleDarkMode() {
+            currentConfig.darkMode = document.getElementById('darkMode').checked;
+            document.body.classList.toggle('bg-dark', currentConfig.darkMode);
+            document.body.classList.toggle('text-light', currentConfig.darkMode);
+        }
+
+        function updateConfig() {
+            currentConfig.showLineNumbers = document.getElementById('showLineNumbers').checked;
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function getConfig() {
+            return {
+                darkMode: currentConfig.darkMode,
+                showLineNumbers: currentConfig.showLineNumbers
+            };
+        }
+
+        function previewFile(filename) {
+            showLoading();
+            const previewContent = document.getElementById('preview-content');
+            
+            // 显示加载中
+            previewContent.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-3">加载预览中...</p>
+                </div>
+            `;
+            
+            fetch(`/preview/${filename}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        previewContent.innerHTML = `
+                            <div class="text-center">
+                                <img src="${data.preview_url}" class="img-fluid" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" alt="预览图片">
+                            </div>
+                        `;
+                    } else {
+                        previewContent.innerHTML = `<div class="alert alert-danger">${data.error || '预览生成失败'}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    previewContent.innerHTML = '<div class="alert alert-danger">获取预览时发生错误</div>';
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+
+        function showContent(filename) {
+            const contentModal = new bootstrap.Modal(document.getElementById('contentModal'));
+            const markdownContent = document.getElementById('markdown-content');
+            
+            // 显示加载动画
+            markdownContent.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-3">加载中...</p>
+                </div>
+            `;
+            
+            contentModal.show();
+            
+            // 获取文件内容
+            fetch(`/content/${filename}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 使用正确的 marked API 渲染 Markdown 内容
+                        markdownContent.innerHTML = marked.parse(data.content);
+                        
+                        // 高亮代码块
+                        document.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightBlock(block);
+                        });
+                    } else {
+                        markdownContent.innerHTML = `<div class="alert alert-danger">${data.error || '加载失败'}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    markdownContent.innerHTML = '<div class="alert alert-danger">加载内容时发生错误</div>';
+                });
+        }
+
+        function regeneratePreview(filename) {
+            if (!confirm('确定要重新生成预览图片吗？')) {
+                return;
+            }
+            
+            showLoading();
+            const previewContent = document.getElementById('preview-content');
+            
+            // 显示加载中
+            previewContent.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-3">重新生成预览中...</p>
+                </div>
+            `;
+            
+            fetch(`/regenerate/${filename}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        previewContent.innerHTML = `
+                            <div class="text-center">
+                                <img src="${data.preview_url}?t=${new Date().getTime()}" class="img-fluid" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" alt="预览图片">
+                                <div class="alert alert-success mt-3">预览已成功重新生成</div>
+                            </div>
+                        `;
+                    } else {
+                        previewContent.innerHTML = `<div class="alert alert-danger">${data.error || '预览重新生成失败'}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    previewContent.innerHTML = '<div class="alert alert-danger">重新生成预览时发生错误</div>';
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+
+        function regenerateMD(filename) {
+            if (!confirm('确定要使用大模型重新生成报告吗？这可能需要一些时间。')) {
+                return;
+            }
+            
+            showLoading();
+            const previewContent = document.getElementById('preview-content');
+            
+            // 显示加载中
+            previewContent.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-3">使用AI重新生成报告中，这可能需要几分钟...</p>
+                </div>
+            `;
+            
+            fetch(`/regenerate-md/${filename}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        previewContent.innerHTML = `
+                            <div class="alert alert-success">
+                                <h4>报告重新生成成功！</h4>
+                                <p>${data.message || '报告已成功更新'}</p>
+                                <div class="mt-3">
+                                    <button class="btn btn-primary" onclick="previewFile('${filename}')">查看预览</button>
+                                    <button class="btn btn-info" onclick="showContent('${filename}')">查看内容</button>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        previewContent.innerHTML = `<div class="alert alert-danger">${data.error || data.message || '报告生成失败'}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    previewContent.innerHTML = '<div class="alert alert-danger">重新生成报告时发生错误</div>';
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+
+        function generateTodayReport() {
+            if (!confirm('确定要生成今日报告吗？这可能需要几分钟时间来从Reddit获取数据并分析。')) {
+                return;
+            }
+            
+            showLoading();
+            const previewContent = document.getElementById('preview-content');
+            
+            // 显示加载中
+            previewContent.innerHTML = `
+                <div class="text-center p-5">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-3">正在生成今日报告，请耐心等待...</p>
+                    <p class="small text-muted mt-2">系统将从Reddit获取最新数据并进行分析</p>
+                </div>
+            `;
+            
+            // 使用 POST 请求生成报告
+            fetch('/generate-today', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    previewContent.innerHTML = `
+                        <div class="alert alert-success">
+                            <h4>今日报告生成成功！</h4>
+                            <p>${data.message}</p>
+                            <div class="mt-3">
+                                ${data.report_path ? `
+                                    <button class="btn btn-primary" onclick="previewFile('${data.report_path}')">查看预览</button>
+                                    <button class="btn btn-info" onclick="showContent('${data.report_path}')">查看内容</button>
+                                ` : ''}
+                                <button class="btn btn-secondary" onclick="location.reload()">刷新文件列表</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    previewContent.innerHTML = `<div class="alert alert-danger">${data.message || '今日报告生成失败'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                previewContent.innerHTML = '<div class="alert alert-danger">生成今日报告时发生错误</div>';
+            })
+            .finally(() => {
+                hideLoading();
+            });
+        }
+    </script>
+</body>
+</html> 
