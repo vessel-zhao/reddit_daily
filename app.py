@@ -28,23 +28,58 @@ def get_report_files():
     reports_dir = 'reports'
     
     try:
-        # 遍历reports目录下的所有日期文件夹
-        for date_dir in sorted(os.listdir(reports_dir), reverse=True):
+        # 1. 先添加最新报告
+        lastest_report = os.path.join(reports_dir, 'lastest', 'lastest_report.md')
+        print(f"检查最新报告文件: {lastest_report}, 存在: {os.path.exists(lastest_report)}")
+        
+        if os.path.exists(lastest_report):
+            # 将相对路径转换为前端可以使用的格式
+            lastest_path = lastest_report.replace('\\', '/')
+            files.append({
+                'name': '最新报告',
+                'path': lastest_path,
+                'date': '最新',
+                'type': '日报'
+            })
+            print(f"已添加最新报告到文件列表: {lastest_path}")
+        
+        # 2. 获取日期目录
+        date_dirs = []
+        for item in os.listdir(reports_dir):
+            full_path = os.path.join(reports_dir, item)
+            if os.path.isdir(full_path) and item != 'lastest':
+                date_dirs.append(item)
+        
+        # 按日期倒序排序
+        date_dirs.sort(reverse=True)
+        print(f"找到日期目录: {date_dirs}")
+        
+        # 3. 遍历日期目录获取报告文件
+        for date_dir in date_dirs:
             dir_path = os.path.join(reports_dir, date_dir)
-            if os.path.isdir(dir_path) and date_dir != 'lastest':
-                # 查找该日期目录下的report文件
+            try:
                 for file in os.listdir(dir_path):
                     if file.endswith('.md') and 'report' in file:
-                        file_path = os.path.join(dir_path, file)
+                        # 将相对路径转换为前端可以使用的格式
+                        file_path = os.path.join(dir_path, file).replace('\\', '/')
                         files.append({
                             'name': file,
                             'path': file_path,
                             'date': date_dir,
                             'type': '日报'
                         })
+                        print(f"添加报告文件: {file_path}")
+            except Exception as e:
+                print(f"读取目录 {dir_path} 失败: {str(e)}")
     except Exception as e:
-        print(f"Error reading files: {str(e)}")
+        print(f"获取文件列表失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return []
+    
+    print(f"共找到 {len(files)} 个文件")
+    for i, file in enumerate(files):
+        print(f"文件 {i+1}: {file['name']} - {file['path']}")
         
     return files
 
@@ -90,39 +125,13 @@ def get_config_from_request():
 
 @app.route('/')
 def index():
+    """首页"""
     try:
-        reports_dir = 'reports'
-        files = []
-        
-        # 遍历 reports 目录下的所有日期目录
-        for date_dir in os.listdir(reports_dir):
-            date_path = os.path.join(reports_dir, date_dir)
-            if not os.path.isdir(date_path):
-                continue
-                
-            # 遍历日期目录下的所有 Markdown 文件
-            for filename in os.listdir(date_path):
-                if not filename.endswith('.md'):
-                    continue
-                    
-                # 使用相对路径，确保路径格式正确
-                relative_path = os.path.join('reports', date_dir, filename).replace('\\', '/')
-                full_path = os.path.join(date_path, filename)
-                file_stat = os.stat(full_path)
-                
-                files.append({
-                    'name': filename,
-                    'path': relative_path,  # 使用相对路径
-                    'size': file_stat.st_size,
-                    'date': datetime.fromtimestamp(file_stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
-                })
-        
-        # 按日期降序排序
-        files.sort(key=lambda x: x['date'], reverse=True)
-        
+        # 获取所有报告文件
+        files = get_report_files()
         return render_template('index.html', files=files)
     except Exception as e:
-        print(f"Error listing files: {str(e)}")
+        print(f"Index error: {str(e)}")
         return render_template('index.html', error=str(e))
 
 @app.route('/preview/<path:filename>')
@@ -345,10 +354,11 @@ def generate_today():
     """生成当天的完整报告"""
     try:
         # 导入 main 函数
-        from main import main
+        from main import main,move_to_lastest
         
         # 执行 main 函数
         success = main()
+        move_to_lastest()
         
         if success:
             # 获取当前日期
@@ -382,6 +392,13 @@ def generate_today():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+@app.route('/refresh')
+def refresh():
+    """强制刷新文件列表"""
+    # 获取所有报告文件
+    files = get_report_files()
+    return render_template('index.html', files=files)
 
 if __name__ == '__main__':
     app.run(debug=True) 

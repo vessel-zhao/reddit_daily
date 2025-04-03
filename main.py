@@ -146,54 +146,57 @@ def preview_report(report_path):
     except Exception as e:
         print(f"预览生成错误: {str(e)}")
         return False
+    
+def move_to_lastest():
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    print(f"\n分析完成！\n- 数据目录: reports/{current_date}\n"
+            f"- 原始数据: reddit_raw_{current_date}.txt\n"
+            f"- 分析报告: reddit_report_{current_date}.md")
+    
+    # 新增：创建last文件夹并写入最新文件
+    last_dir = os.path.join("reports", "lastest")
+    os.makedirs(last_dir, exist_ok=True)
+    
+    # 定义最新文件路径
+    last_raw_txt = os.path.join(last_dir, "lastest_raw.txt")
+    last_raw_js = os.path.join(last_dir, "lastest_raw.js")
+    last_report_md = os.path.join(last_dir, "lastest_report.md")
+    last_report_png = os.path.join(last_dir, "lastest_report.png")
+    
+    # 获取当前日期文件路径
+    raw_data_file = os.path.join("reports", current_date, f"reddit_raw_{current_date}.txt")
+    report_file = os.path.join("reports", current_date, f"reddit_report_{current_date}.md")
+    
+    # 复制文件到last文件夹
+    try:
+        # 复制原始数据文件
+        with open(raw_data_file, 'r', encoding='utf-8') as src, \
+                open(last_raw_txt, 'w+', encoding='utf-8') as dst:
+            dst.write(src.read())
+        logger.info(f"转换js文件: {last_raw_js}")
+        # 转换并保存JS文件
+        convert_to_js(raw_data_file, last_raw_js,translator)
+        
+        # 复制报告文件
+        with open(report_file, 'r', encoding='utf-8') as src, \
+                open(last_report_md, 'w+', encoding='utf-8') as dst:
+            dst.write(src.read())
+        
+        print(f"- 最新文件已保存到: {last_dir}")
+        print(f"生成图片中...")
+        # 转换并保存图片
+        convert_md_to_image(
+            last_report_md,
+            last_report_png,
+            width=600
+        )
+    except Exception as e:
+        print(f"\n最新文件保存失败: {str(e)}")
+    else:
+        print("\n分析过程中出现错误，请查看日志文件")
 
 if __name__ == "__main__":
     print("Reddit分析工具启动...")
     
     if main():
-        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-        print(f"\n分析完成！\n- 数据目录: reports/{current_date}\n"
-              f"- 原始数据: reddit_raw_{current_date}.txt\n"
-              f"- 分析报告: reddit_report_{current_date}.md")
-        
-        # 新增：创建last文件夹并写入最新文件
-        last_dir = os.path.join("reports", "lastest")
-        os.makedirs(last_dir, exist_ok=True)
-        
-        # 定义最新文件路径
-        last_raw_txt = os.path.join(last_dir, "lastest_raw.txt")
-        last_raw_js = os.path.join(last_dir, "lastest_raw.js")
-        last_report_md = os.path.join(last_dir, "lastest_report.md")
-        last_report_png = os.path.join(last_dir, "lastest_report.png")
-        
-        # 获取当前日期文件路径
-        raw_data_file = os.path.join("reports", current_date, f"reddit_raw_{current_date}.txt")
-        report_file = os.path.join("reports", current_date, f"reddit_report_{current_date}.md")
-        
-        # 复制文件到last文件夹
-        try:
-            # 复制原始数据文件
-            with open(raw_data_file, 'r', encoding='utf-8') as src, \
-                 open(last_raw_txt, 'w+', encoding='utf-8') as dst:
-                dst.write(src.read())
-            logger.info(f"转换js文件: {last_raw_js}")
-            # 转换并保存JS文件
-            convert_to_js(raw_data_file, last_raw_js,translator)
-            
-            # 复制报告文件
-            with open(report_file, 'r', encoding='utf-8') as src, \
-                 open(last_report_md, 'w+', encoding='utf-8') as dst:
-                dst.write(src.read())
-            
-            print(f"- 最新文件已保存到: {last_dir}")
-            print(f"生成图片中...")
-            # 转换并保存图片
-            convert_md_to_image(
-                last_report_md,
-                last_report_png,
-                width=600
-            )
-        except Exception as e:
-            print(f"\n最新文件保存失败: {str(e)}")
-    else:
-        print("\n分析过程中出现错误，请查看日志文件")
+        move_to_lastest()

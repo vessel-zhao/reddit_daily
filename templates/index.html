@@ -182,7 +182,10 @@
                 <div class="header">
                     <div class="d-flex justify-content-between align-items-center">
                         <h1>每日AI热点话题</h1>
-                        <button class="btn btn-light btn-sm" onclick="generateTodayReport()">生成今日报告</button>
+                        <div>
+                            <button class="btn btn-light btn-sm me-2" onclick="location.href='/refresh'">刷新列表</button>
+                            <button class="btn btn-light btn-sm" onclick="generateTodayReport()">生成今日报告</button>
+                        </div>
                     </div>
                 </div>
                 <div class="file-list">
