@@ -71,7 +71,8 @@ def main():
             logger.error("未找到有效的subreddit列表")
             return False
             
-        logger.info(f"将分析以下subreddit: {', '.join(subreddits)}")
+        subreddit_names = [s["name"] for s in subreddits]
+        logger.info(f"将分析以下subreddit: {', '.join(subreddit_names)}")
         
         # 检查原始数据文件是否已存在且有效
         if os.path.exists(raw_data_file) and os.path.getsize(raw_data_file) > 100:
@@ -82,13 +83,13 @@ def main():
         with open(raw_data_file, "w", encoding="utf-8") as f:
             f.write(f"Reddit数据采集\n")
             f.write(f"采集时间: {now.strftime('%Y-%m-%d %H:%M UTC')}\n")
-            f.write(f"目标subreddit: {', '.join(subreddits)}\n")
+            f.write(f"目标subreddit: {', '.join(subreddit_names)}\n")
             f.write("="*60 + "\n\n")
         
         # 收集数据
         all_posts = []
         for subreddit in subreddits:
-            posts = reddit_client.fetch_posts(subreddit, time_ranges)
+            posts = reddit_client.fetch_posts(subreddit["name"], time_ranges, subreddit["weight"])
             all_posts.extend(posts)
             time.sleep(2)
         

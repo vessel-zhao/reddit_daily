@@ -13,17 +13,33 @@ class RedditClient:
         )
         self.logger = logging.getLogger(__name__)
         
-    def load_subreddits(self, file_path: str = "subreddits.txt") -> List[str]:
-        """加载subreddit列表"""
+    def load_subreddits(self, file_path: str = "subreddits.txt") -> List[Dict[str, int]]:
+        """加载subreddit列表及其权重"""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                return [line.strip() for line in f if line.strip()]
+                subreddits = []
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    if ":" in line:
+                        name, weight = line.split(":")
+                        subreddits.append({"name": name.strip(), "weight": int(weight.strip())})
+                    else:
+                        subreddits.append({"name": line, "weight": 10})  # 默认权重为10
+                return subreddits
         except FileNotFoundError:
             self.logger.error(f"Subreddit列表文件 {file_path} 未找到")
             return []
 
-    def fetch_posts(self, subreddit_name: str, time_ranges: Dict, max_posts: int = 10) -> List[Dict]:
-        """获取指定subreddit的帖子"""
+    def fetch_posts(self, subreddit_name: str, time_ranges: Dict, max_posts: int = None) -> List[Dict]:
+        """获取指定subreddit的帖子
+        
+        Args:
+            subreddit_name: subreddit名称
+            time_ranges: 时间范围字典
+            max_posts: 最大帖子数(可选)，如果未提供则获取所有符合条件的帖子
+        """
         posts = []
         try:
             subreddit = self.reddit.subreddit(subreddit_name)
@@ -36,7 +52,7 @@ class RedditClient:
                     if post_time < time_ranges["month"]:
                         continue
                         
-                    if post_count >= max_posts:
+                    if max_posts is not None and post_count >= max_posts:
                         break
                         
                     # 处理评论
